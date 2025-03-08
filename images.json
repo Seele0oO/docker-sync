@@ -15,5 +15,10 @@
     "versions": ["latest"],
     "sync-one-time": [],
     "registry": "ghcr.io"
+  },
+  {
+    "name":"snowdreamtech/frps",
+    "versions":["alpine"],
+    "sync-one-time": []
   }
 ]
