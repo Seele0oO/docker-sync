@@ -1,0 +1,26 @@
+{
+    "timestamp": "2025-03-08 08:16:34.206715",
+    "images": [
+        {
+            "name": "nginx",
+            "versions": {
+                "latest": "Successfully synced"
+            },
+            "registry": "docker.io"
+        },
+        {
+            "name": "mysql",
+            "versions": {
+                "oracle": "Successfully synced"
+            },
+            "registry": "docker.io"
+        },
+        {
+            "name": "seele0oo/luoxu-web/luoxu",
+            "versions": {
+                "latest": "Successfully synced"
+            },
+            "registry": "ghcr.io"
+        }
+    ]
+}
