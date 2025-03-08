@@ -48,5 +48,20 @@
         "image": "ghcr.io/seele0oo/luoxu-web/luoxu:latest",
         "digest": "sha256:b5a4de0a5f9cbc958485ff272607c8abcd5347962dbfea22f5b739b2eba52aec",
         "sync_time": "2025-03-08 08:17:16.334330"
+    },
+    {
+        "image": "docker.io/nginx:latest",
+        "digest": "sha256:9d6b58feebd2dbd3c56ab5853333d627cc6e281011cfd6050fa4bcf2072c9496",
+        "sync_time": "2025-03-08 09:02:21.849279"
+    },
+    {
+        "image": "docker.io/mysql:oracle",
+        "digest": "sha256:146682692a3aa409eae7b7dc6a30f637c6cb49b6ca901c2cd160becc81127d3b",
+        "sync_time": "2025-03-08 09:02:38.832136"
+    },
+    {
+        "image": "ghcr.io/seele0oo/luoxu-web/luoxu:latest",
+        "digest": "sha256:b5a4de0a5f9cbc958485ff272607c8abcd5347962dbfea22f5b739b2eba52aec",
+        "sync_time": "2025-03-08 09:02:47.685886"
     }
 ]
