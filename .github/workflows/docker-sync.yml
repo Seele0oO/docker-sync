@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: '0 0 * * *'  # 每天UTC时间0点运行
   workflow_dispatch:  # 允许手动触发
+  push:
+    paths:
+      - 'images.json'
 
 jobs:
   sync_and_commit:
