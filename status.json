@@ -1,5 +1,5 @@
 {
-    "timestamp": "2025-03-08 09:02:05.045122",
+    "timestamp": "2025-03-08 09:06:28.561200",
     "images": [
         {
             "name": "nginx",
@@ -21,6 +21,13 @@
                 "latest": "Successfully synced"
             },
             "registry": "ghcr.io"
+        },
+        {
+            "name": "snowdreamtech/frps",
+            "versions": {
+                "alpine": "Successfully synced"
+            },
+            "registry": "docker.io"
         }
     ]
 }
