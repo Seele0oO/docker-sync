@@ -143,5 +143,25 @@
         "image": "docker.io/snowdreamtech/frps:latest",
         "digest": "sha256:18c267ebbd4f3ba837856311343e1f96c8d2d1014c7cd91622b120ae307445b6",
         "sync_time": "2025-03-09 00:20:33.609639"
+    },
+    {
+        "image": "docker.io/nginx:latest",
+        "digest": "sha256:9d6b58feebd2dbd3c56ab5853333d627cc6e281011cfd6050fa4bcf2072c9496",
+        "sync_time": "2025-03-10 00:19:41.814525"
+    },
+    {
+        "image": "docker.io/mysql:oracle",
+        "digest": "sha256:146682692a3aa409eae7b7dc6a30f637c6cb49b6ca901c2cd160becc81127d3b",
+        "sync_time": "2025-03-10 00:19:59.419054"
+    },
+    {
+        "image": "ghcr.io/seele0oo/luoxu-web/luoxu:latest",
+        "digest": "sha256:b5a4de0a5f9cbc958485ff272607c8abcd5347962dbfea22f5b739b2eba52aec",
+        "sync_time": "2025-03-10 00:20:08.454651"
+    },
+    {
+        "image": "docker.io/snowdreamtech/frps:latest",
+        "digest": "sha256:18c267ebbd4f3ba837856311343e1f96c8d2d1014c7cd91622b120ae307445b6",
+        "sync_time": "2025-03-10 00:20:15.186672"
     }
 ]
