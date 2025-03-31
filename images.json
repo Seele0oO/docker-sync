@@ -20,5 +20,10 @@
     "name":"snowdreamtech/frps",
     "versions":["latest"],
     "sync-one-time": []
+  },
+  {
+    "name":"snowdreamtech/frpc",
+    "versions":["latest","alpine"],
+    "sync-one-time": []
   }
 ]
