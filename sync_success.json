@@ -943,5 +943,35 @@
         "image": "docker.io/snowdreamtech/frpc:alpine",
         "digest": "sha256:ce7366133c9da327bf70c8df960abe689882c4906d465d604efa992a4fb16cb0",
         "sync_time": "2025-04-11 00:24:21.523856"
+    },
+    {
+        "image": "docker.io/nginx:latest",
+        "digest": "sha256:09369da6b10306312cd908661320086bf87fbae1b6b0c49a1f50ba531fef2eab",
+        "sync_time": "2025-04-12 00:22:41.357374"
+    },
+    {
+        "image": "docker.io/mysql:oracle",
+        "digest": "sha256:0596fa224cdf3b3355ce3ddbfd7ce77be27ec9e51841dfc5d2e1c8b81eea69d2",
+        "sync_time": "2025-04-12 00:22:59.472046"
+    },
+    {
+        "image": "ghcr.io/seele0oo/luoxu-web/luoxu:latest",
+        "digest": "sha256:b5a4de0a5f9cbc958485ff272607c8abcd5347962dbfea22f5b739b2eba52aec",
+        "sync_time": "2025-04-12 00:23:09.265871"
+    },
+    {
+        "image": "docker.io/snowdreamtech/frps:latest",
+        "digest": "sha256:b2bded1f50e0649eb251b2381b8d484c6663ec25c50e302e73628e326f74d85e",
+        "sync_time": "2025-04-12 00:23:24.586966"
+    },
+    {
+        "image": "docker.io/snowdreamtech/frpc:latest",
+        "digest": "sha256:ce7366133c9da327bf70c8df960abe689882c4906d465d604efa992a4fb16cb0",
+        "sync_time": "2025-04-12 00:23:31.540094"
+    },
+    {
+        "image": "docker.io/snowdreamtech/frpc:alpine",
+        "digest": "sha256:ce7366133c9da327bf70c8df960abe689882c4906d465d604efa992a4fb16cb0",
+        "sync_time": "2025-04-12 00:23:37.521206"
     }
 ]
