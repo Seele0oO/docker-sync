@@ -25,5 +25,11 @@
     "name":"snowdreamtech/frpc",
     "versions":["latest","alpine"],
     "sync-one-time": []
+  },
+  {
+    "name": "biliup/caution",
+    "versions": ["latest"],
+    "sync-one-time": [],
+    "registry": "ghcr.io"
   }
 ]
