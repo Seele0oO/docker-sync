@@ -1,5 +1,5 @@
 {
-    "timestamp": "2025-06-02 00:25:49.599458",
+    "timestamp": "2025-06-02 15:46:30.242099",
     "images": [
         {
             "name": "nginx",
@@ -36,6 +36,13 @@
                 "alpine": "Successfully synced"
             },
             "registry": "docker.io"
+        },
+        {
+            "name": "biliup/caution",
+            "versions": {
+                "latest": "Successfully synced"
+            },
+            "registry": "ghcr.io"
         }
     ]
 }
