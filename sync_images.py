@@ -1,46 +1,65 @@
-import json
 import os
-import subprocess
 import sys
-import requests
+import json
+import subprocess
 import logging
 from datetime import datetime
 
-# 设置日志记录
+# 设置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 
+DIGEST_RECORD_FILE = "digest_records.json"
+
 def run_command(command, capture_output=True):
-    """运行命令并捕获输出，使用日志记录输出"""
     try:
-        logger.info(f"Running command: {command}")
+        logger.info(f"Running: {command}")
         result = subprocess.run(command, shell=True, check=True, capture_output=capture_output, text=True)
         if result.stdout:
-            logger.info(f"Command output: {result.stdout.strip()}")
+            logger.info(result.stdout.strip())
         if result.stderr:
-            logger.error(f"Command error: {result.stderr.strip()}")
+            logger.error(result.stderr.strip())
         return result.stdout.strip()
     except subprocess.CalledProcessError as e:
-        logger.error(f"Error executing command: {command}")
-        logger.error(f"Error details: {e}")
-        logger.error(f"Standard Output: {e.stdout}")
-        logger.error(f"Standard Error: {e.stderr}")
+        logger.error(f"Command failed: {command}")
+        logger.error(f"Stdout: {e.stdout}")
+        logger.error(f"Stderr: {e.stderr}")
         return None
 
-def get_digest(image_name):
-    """从镜像中获取digest"""
-    inspect_cmd = f"docker inspect --format='{{{{.RepoDigests}}}}' {image_name}"
-    digest = run_command(inspect_cmd)
-    if digest:
-        # RepoDigests 返回的格式是一个列表，获取第一个项即为digest
-        return digest.split()[0].split('@')[1]  # 获取sha256:<digest>部分
+def check_image_exists(image):
+    """使用 docker manifest inspect 判断镜像是否存在"""
+    return run_command(f"docker manifest inspect {image}") is not None
+
+def get_digest(image):
+    """获取 docker 镜像的 digest"""
+    inspect_cmd = f"docker inspect --format='{{{{.RepoDigests}}}}' {image}"
+    output = run_command(inspect_cmd)
+    if output:
+        try:
+            digest = output.split()[0].split('@')[1]
+            return digest
+        except Exception:
+            return None
     return None
 
+def load_digest_records():
+    if os.path.exists(DIGEST_RECORD_FILE):
+        with open(DIGEST_RECORD_FILE, 'r') as f:
+            return json.load(f)
+    return {}
+
+def save_digest_records(records):
+    with open(DIGEST_RECORD_FILE, 'w') as f:
+        json.dump(records, f, indent=4)
+
 def get_target_image_name(image, version):
-    """生成目标镜像名称"""
     name = image.get('name')
     registry = image.get('registry', 'docker.io')
-    
+    namespace = os.environ.get('ALIYUN_REGISTRY_NAMESPACE')
+    if not namespace:
+        logger.error("Environment variable ALIYUN_REGISTRY_NAMESPACE not set.")
+        sys.exit(1)
+
     if registry == 'docker.io':
         if '/' in name:
             source_org, source_image = name.split('/', 1)
@@ -60,152 +79,76 @@ def get_target_image_name(image, version):
         elif len(parts) >= 3:
             source_repo, source_org, source_image = parts[:3]
         target_name = f"{source_repo}-{source_org}-{source_image}:{version}"
-    
-    return f"registry.cn-hangzhou.aliyuncs.com/{os.environ['ALIYUN_REGISTRY_NAMESPACE']}/{target_name}"
+    return f"registry.cn-hangzhou.aliyuncs.com/{namespace}/{target_name}"
 
-def save_sync_success(sync_data):
-    """保存同步成功的信息到 sync_success.json"""
-    sync_filename = "sync_success.json"
-    try:
-        # 如果文件存在，先读取现有数据
-        if os.path.exists(sync_filename):
-            with open(sync_filename, 'r') as f:
-                existing_data = json.load(f)
-        else:
-            existing_data = []
+def sync_image(image, version, digest_records):
+    registry = image.get('registry', 'docker.io')
+    name = image['name']
+    source_image = f"{registry}/{name}:{version}"
+    target_image = get_target_image_name(image, version)
 
-        # 将新数据添加到现有数据
-        existing_data.append(sync_data)
+    logger.info(f"==== Syncing {source_image} ====")
 
-        # 写入文件
-        with open(sync_filename, 'w') as f:
-            json.dump(existing_data, f, indent=4)
-        logger.info(f"Sync success data saved to {sync_filename}")
-    except Exception as e:
-        logger.error(f"Error saving sync success data: {e}")
-        sys.exit(1)
+    if not check_image_exists(source_image):
+        logger.warning(f"{source_image} does not exist. Skipping.")
+        return
 
-def save_status(task_status):
-    """保存任务执行状态到 status.json"""
-    status_filename = "status.json"
-    try:
-        with open(status_filename, 'w') as f:
-            json.dump(task_status, f, indent=4)
-        logger.info(f"Task status saved to {status_filename}")
-    except Exception as e:
-        logger.error(f"Error saving task status data: {e}")
-        sys.exit(1)
+    # 拉取镜像
+    if not run_command(f"docker pull {source_image}"):
+        logger.error(f"Failed to pull {source_image}. Skipping.")
+        return
 
-def load_sync_success():
-    """加载同步成功的记录"""
-    sync_filename = "sync_success.json"
-    if os.path.exists(sync_filename):
-        try:
-            with open(sync_filename, 'r') as f:
-                return json.load(f)
-        except Exception as e:
-            logger.error(f"Error loading sync success data: {e}")
-            return []
-    return []
+    current_digest = get_digest(source_image)
+    if not current_digest:
+        logger.error(f"Cannot get digest for {source_image}. Skipping.")
+        return
+
+    key = f"{registry}/{name}:{version}"
+    prev_record = digest_records.get(key)
+
+    if prev_record and prev_record["digest"] == current_digest:
+        logger.info(f"{key} not changed since last sync. Skipping.")
+        return
+
+    # 打标签并推送
+    if not run_command(f"docker tag {source_image} {target_image}"):
+        logger.error(f"Failed to tag {source_image} as {target_image}")
+        return
+
+    if not run_command(f"docker push {target_image}"):
+        logger.error(f"Failed to push {target_image}")
+        return
+
+    logger.info(f"Successfully synced {source_image} to {target_image}")
+    digest_records[key] = {
+        "digest": current_digest,
+        "last_sync_time": str(datetime.utcnow())
+    }
 
 def main():
-    task_status = {"timestamp": str(datetime.utcnow()), "images": []}
-    sync_success_data = load_sync_success()
-
     try:
         with open('images.json', 'r') as f:
             images = json.load(f)
-    except FileNotFoundError:
-        logger.error("Error: images.json file not found.")
+    except Exception as e:
+        logger.error(f"Failed to load images.json: {e}")
         sys.exit(1)
-    except json.JSONDecodeError:
-        logger.error("Error: images.json file is not a valid JSON.")
-        sys.exit(1)
+
+    digest_records = load_digest_records()
 
     for image in images:
         name = image.get('name')
         versions = image.get('versions', [])
-        sync_one_time_versions = image.get('sync-one-time', [])
-        registry = image.get('registry', 'docker.io')
+        one_time = image.get('sync-one-time', [])
+        all_versions = set(versions + one_time)
 
-        image_status = {"name": name, "versions": {}, "registry": registry}
-        task_status["images"].append(image_status)
-
-        # 同步 `sync-one-time` 中的标签（一次性同步）
-        for version in sync_one_time_versions:
-            # 检查该版本是否已同步
-            synced = False
-            for sync in sync_success_data:
-                if sync["image"] == f"{registry}/{name}:{version}":
-                    synced = True
-                    logger.info(f"Image {registry}/{name}:{version} already synced, skipping.")
-                    break
-
-            if synced:
+        for version in all_versions:
+            try:
+                sync_image(image, version, digest_records)
+            except Exception as e:
+                logger.error(f"Unexpected error syncing {name}:{version}: {e}")
                 continue
 
-            logger.info(f"Processing one-time sync for image: {name}:{version}")
-            source_image = f"{registry}/{name}:{version}"
-            target_image = get_target_image_name(image, version)
+    save_digest_records(digest_records)
 
-            # 拉取源镜像
-            logger.info(f"Pulling image {source_image}...")
-            pull_cmd = f"docker pull {source_image}"
-            run_command(pull_cmd)
-
-            # 打标签后推送到阿里云仓库
-            logger.info(f"Tagging image {source_image} as {target_image}...")
-            tag_cmd = f"docker tag {source_image} {target_image}"
-            run_command(tag_cmd)
-
-            logger.info(f"Pushing image {target_image} to Aliyun...")
-            push_cmd = f"docker push {target_image}"
-            run_command(push_cmd)
-
-            image_status["versions"][version] = "Successfully synced"
-            logger.info(f"Successfully synced {source_image} to {target_image}")
-
-            # 记录同步成功的信息
-            sync_data = {
-                "image": source_image,
-                "digest": get_digest(source_image),
-                "sync_time": str(datetime.utcnow())
-            }
-            save_sync_success(sync_data)
-
-        # 同步 `versions` 中的标签（始终同步）
-        for version in versions:
-            logger.info(f"Processing always-sync for image: {name}:{version}")
-            source_image = f"{registry}/{name}:{version}"
-            target_image = get_target_image_name(image, version)
-
-            # 拉取源镜像
-            logger.info(f"Pulling image {source_image}...")
-            pull_cmd = f"docker pull {source_image}"
-            run_command(pull_cmd)
-
-            # 打标签后推送到阿里云仓库
-            logger.info(f"Tagging image {source_image} as {target_image}...")
-            tag_cmd = f"docker tag {source_image} {target_image}"
-            run_command(tag_cmd)
-
-            logger.info(f"Pushing image {target_image} to Aliyun...")
-            push_cmd = f"docker push {target_image}"
-            run_command(push_cmd)
-
-            image_status["versions"][version] = "Successfully synced"
-            logger.info(f"Successfully synced {source_image} to {target_image}")
-
-            # 记录同步成功的信息
-            sync_data = {
-                "image": source_image,
-                "digest": get_digest(source_image),
-                "sync_time": str(datetime.utcnow())
-            }
-            save_sync_success(sync_data)
-
-    # 保存任务执行状态到 status.json
-    save_status(task_status)
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

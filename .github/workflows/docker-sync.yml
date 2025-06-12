@@ -2,8 +2,8 @@ name: Docker Sync
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # 每天UTC时间0点运行
-  workflow_dispatch:  # 允许手动触发
+    - cron: '0 0 * * *'
+  workflow_dispatch:
   push:
     paths:
       - 'images.json'
@@ -15,24 +15,19 @@ jobs:
       contents: write
 
     steps:
-      # 步骤 1: 检出代码
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 步骤 2: 设置 Git 用户信息
       - name: Setup Git user
-        shell: bash
         run: |
           git config --global user.email "github-actions@users.noreply.github.com"
           git config --global user.name "github-actions"
 
-      # 步骤 3: 设置 Python 环境
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
-      # 步骤 4: 登录阿里云容器注册表
       - name: Login to Aliyun Container Registry
         uses: docker/login-action@v3
         with:
@@ -40,38 +35,26 @@ jobs:
           username: ${{ secrets.ALIYUN_USERNAME }}
           password: ${{ secrets.ALIYUN_PASSWORD }}
 
-      # 步骤 5: 登录 GitHub 容器注册表（ghcr.io）
-      - name: Login to GitHub Container Registry (GHCR)
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_TOKEN }}
-
-      # 步骤 6: 拉取并同步镜像
       - name: Sync Docker Images
         env:
           ALIYUN_REGISTRY_NAMESPACE: ${{ secrets.ALIYUN_REGISTRY_NAMESPACE }}
         run: |
-          pip install requests
           python3 sync_images.py
 
-      # 步骤 7: 上传 status.json 为 CI 制品，保存 24 小时
-      - name: Upload status.json as artifact
+      - name: Upload digest_records.json
         uses: actions/upload-artifact@v4
         with:
-          name: status-json
-          path: status.json
-          retention-days: 1  # 设置有效期为 1 天（24小时）
+          name: digest-records
+          path: digest_records.json
+          retention-days: 7
 
-      # 步骤 8: 提交并推送 status.json 到 GitHub 仓库
-      - name: Commit and push status.json to GitHub
+      - name: Commit and push status.json (optional)
+        if: always()
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore(assets): update run results"
+          commit_message: "chore(sync): update results"
           branch: master
           commit_user_name: github-actions
           commit_user_email: actions@github.com
-          commit_author: github-actions <actions@github.com>
         env:
           GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
