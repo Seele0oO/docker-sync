@@ -42,7 +42,7 @@ jobs:
         run: python sync_images.py
 
       - name: Upload updated digest_records.json
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: digest-records
           path: digest_records.json
