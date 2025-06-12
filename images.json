@@ -36,5 +36,172 @@
     "name": "linuxserver/nextcloud",
     "versions": ["latest"],
     "sync-one-time": []
+  },
+  {
+    "name": "linuxserver-nextcloud",
+    "versions": ["latest"],
+    "sync-one-time": [],
+    "registry": "registry.cn-hangzhou.aliyuncs.com/docker-sync-0xcb2533"
+  },
+  {
+    "name": "p3terx/aria2-pro",
+    "versions": ["latest"],
+    "sync-one-time": [],
+    "registry": "docker.io"
+  },
+  {
+    "name": "p3terx/ariang",
+    "versions": ["latest"],
+    "sync-one-time": [],
+    "registry": "docker.io"
+  },
+  {
+    "name": "casbin/casdoor",
+    "versions": ["latest"],
+    "sync-one-time": [],
+    "registry": "docker.io"
+  },
+  {
+    "name": "library/redis",
+    "versions": ["latest"],
+    "sync-one-time": [],
+    "registry": "docker.io"
+  },
+  {
+    "name": "library/mariadb",
+    "versions": ["11"],
+    "sync-one-time": [],
+    "registry": "docker.io"
+  },
+  {
+    "name": "linuxserver/jellyfin",
+    "versions": ["latest"],
+    "sync-one-time": [],
+    "registry": "docker.io"
+  },
+  {
+    "name": "linuxserver/qbittorrent",
+    "versions": ["latest"],
+    "sync-one-time": [],
+    "registry": "docker.io"
+  },
+  {
+    "name": "netcccyun/dnsmgr",
+    "versions": ["latest"],
+    "sync-one-time": [],
+    "registry": "docker.io"
+  },
+  {
+    "name": "syncthing/syncthing",
+    "versions": ["latest"],
+    "sync-one-time": [],
+    "registry": "docker.io"
+  },
+  {
+    "name": "snowdreamtech/frpc",
+    "versions": ["latest"],
+    "sync-one-time": [],
+    "registry": "docker.io"
+  },
+  {
+    "name": "library/mysql",
+    "versions": [],
+    "sync-one-time": ["5.7"],
+    "registry": "docker.io"
+  },
+  {
+    "name": "bcanfield/mediamtx-connect",
+    "versions": ["latest"],
+    "sync-one-time": [],
+    "registry": "docker.io"
+  },
+  {
+    "name": "bluenviron/mediamtx",
+    "versions": ["latest"],
+    "sync-one-time": [],
+    "registry": "docker.io"
+  },
+  {
+    "name": "linuxserver/librespeed",
+    "versions": ["latest"],
+    "sync-one-time": [],
+    "registry": "docker.io"
+  },
+  {
+    "name": "gotson/komga",
+    "versions": ["latest"],
+    "sync-one-time": [],
+    "registry": "docker.io"
+  },
+  {
+    "name": "immich-app/immich-server",
+    "versions": [],
+    "sync-one-time": ["release"],
+    "registry": "ghcr.utilapi.bid"
+  },
+  {
+    "name": "immich-app/immich-machine-learning",
+    "versions": [],
+    "sync-one-time": ["release"],
+    "registry": "ghcr.utilapi.bid"
+  },
+  {
+    "name": "tensorchord/pgvecto-rs",
+    "versions": [],
+    "sync-one-time": ["pg14-v0.2.0"],
+    "registry": "docker.io"
+  },
+  {
+    "name": "valkey/valkey",
+    "versions": [],
+    "sync-one-time": ["8-bookworm"],
+    "registry": "docker.io"
+  },
+  {
+    "name": "jonnyan404/cloud-clipboard",
+    "versions": ["latest"],
+    "sync-one-time": [],
+    "registry": "docker.io"
+  },
+  {
+    "name": "photoprism/photoprism",
+    "versions": ["latest"],
+    "sync-one-time": [],
+    "registry": "docker.io"
+  },
+  {
+    "name": "seele0oo/flame",
+    "versions": ["latest"],
+    "sync-one-time": [],
+    "registry": "docker.io"
+  },
+  {
+    "name": "metatube-community/metatube-server",
+    "versions": ["latest"],
+    "sync-one-time": [],
+    "registry": "ghcr.utilapi.bid"
+  },
+  {
+    "name": "library/postgres",
+    "versions": ["15-alpine"],
+    "sync-one-time": [],
+    "registry": "docker.io"
+  },
+  {
+    "name": "containrrr/watchtower",
+    "versions": ["latest"],
+    "sync-one-time": [],
+    "registry": "docker.io"
+  },
+  {
+    "name": "gcr.io/cadvisor/cadvisor",
+    "versions": ["v0.49.1"],
+    "sync-one-time": [],
+    "registry": "m.daocloud.io"
+  },
+  {
+    "name": "louislam/dockge",
+    "versions": ["1"],
+    "sync-one-time": []
   }
 ]
