@@ -44,10 +44,16 @@ def get_digest(image):
     return None
 
 def load_digest_records():
-    if os.path.exists(DIGEST_RECORD_FILE):
+    if not os.path.exists(DIGEST_RECORD_FILE):
+        return {}
+    try:
         with open(DIGEST_RECORD_FILE, 'r') as f:
-            return json.load(f)
-    return {}
+            content = f.read().strip()
+            if not content:
+                return {}
+            return json.loads(content)
+    except Exception:
+        return {}
 
 def save_digest_records(records):
     with open(DIGEST_RECORD_FILE, 'w') as f:
@@ -191,29 +197,14 @@ def main():
 
     digest_records = load_digest_records()
 
+    summary = {"success": 0, "failed": 0, "details": []}
+
     for image in images:
         name = image.get('name')
         versions = image.get('versions', [])
         one_time = image.get('sync-one-time', [])
         all_versions = set(versions + one_time)
 
-        for version in all_versions:
-            try:
-                sync_image(image, version, digest_records)
-            except Exception as e:
-                logger.error(f"Unexpected error syncing {name}:{version}: {e}")
-                continue
-
-    save_digest_records(digest_records)
-
-def main():
-    ...
-    digest_records = load_digest_records()
-
-    summary = {"success": 0, "failed": 0, "details": []}
-
-    for image in images:
-        ...
         for version in all_versions:
             try:
                 sync_image(image, version, digest_records)
