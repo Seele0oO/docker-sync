@@ -27,6 +27,12 @@ jobs:
           path: .
         continue-on-error: true
 
+      - name: Ensure digest_records.json exists
+        run: |
+          if [ ! -f digest_records.json ]; then
+            echo '{}' > digest_records.json
+          fi
+
       - name: Setup Python 3.9
         uses: actions/setup-python@v5
         with:
