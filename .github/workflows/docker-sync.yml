@@ -42,8 +42,11 @@ jobs:
         run: pip install requests
 
       - name: Login to Aliyun Container Registry
-        run: echo "${{ secrets.ALIYUN_REGISTRY_PASSWORD }}" | docker login --username ${{ secrets.ALIYUN_REGISTRY_USERNAME }} --password-stdin registry.cn-hangzhou.aliyuncs.com
-
+        uses: docker/login-action@v3
+        with:
+          registry: registry.cn-hangzhou.aliyuncs.com
+          username: ${{ secrets.ALIYUN_USERNAME }}
+          password: ${{ secrets.ALIYUN_PASSWORD }}
       - name: Run sync script
         run: python sync_images.py
 
