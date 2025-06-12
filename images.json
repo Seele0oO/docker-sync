@@ -17,13 +17,13 @@
     "registry": "ghcr.io"
   },
   {
-    "name":"snowdreamtech/frps",
-    "versions":["latest"],
+    "name": "snowdreamtech/frps",
+    "versions": ["latest"],
     "sync-one-time": []
   },
   {
-    "name":"snowdreamtech/frpc",
-    "versions":["latest","alpine"],
+    "name": "snowdreamtech/frpc",
+    "versions": ["latest", "alpine"],
     "sync-one-time": []
   },
   {
@@ -31,5 +31,10 @@
     "versions": ["latest"],
     "sync-one-time": [],
     "registry": "ghcr.io"
+  },
+  {
+    "name": "linuxserver/nextcloud",
+    "versions": ["latest"],
+    "sync-one-time": []
   }
 ]
