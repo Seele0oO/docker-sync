@@ -2,18 +2,6 @@
   {
     "name": "nginx",
     "versions": ["latest"],
-    "sync-one-time": ["1.21.6", "1.21.5"]
-  },
-  {
-    "name": "mysql",
-    "versions": ["oracle"],
-    "sync-one-time": ["8.0.41", "5.7.44"],
-    "registry": "docker.io"
-  },
-  {
-    "name": "seele0oo/luoxu-web/luoxu",
-    "versions": ["latest"],
-    "sync-one-time": [],
-    "registry": "ghcr.io"
+    "sync-one-time": ["1.21.7"]
   }
 ]
