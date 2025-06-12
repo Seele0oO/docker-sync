@@ -83,13 +83,14 @@ def get_target_image_name(image, version):
         elif len(parts) == 2:
             source_repo = registry
             source_org, source_image = parts
-        elif len(parts) >= 3:
+        else:
             source_repo, source_org, source_image = parts[:3]
         target_name = f"{source_repo}-{source_org}-{source_image}:{version}"
     return f"registry.cn-hangzhou.aliyuncs.com/{namespace}/{target_name}"
+
 def local_image_exists(image_name):
     """检查本地是否存在该镜像"""
-    return run_command(f"docker image inspect {image_name}", fatal=False) is not None
+    return run_command(f"docker image inspect {image_name}") is not None
 
 def sync_image(image, version, digest_records):
     registry = image.get('registry', 'docker.io')
@@ -144,8 +145,6 @@ def sync_image(image, version, digest_records):
         "last_sync_time": str(datetime.utcnow())
     }
 
-
-
 def send_wecom_notification(summary: dict):
     key = os.environ.get("WECOM_WEBHOOK_KEY")
     if not key:
@@ -186,7 +185,6 @@ def send_wecom_notification(summary: dict):
     except Exception as e:
         logger.error(f"Failed to send WeCom notification: {e}")
 
-
 def main():
     try:
         with open('images.json', 'r') as f:
@@ -210,15 +208,15 @@ def main():
                 sync_image(image, version, digest_records)
                 summary["success"] += 1
                 summary["details"].append({
-                    "image": image['name'],
+                    "image": name,
                     "tag": version,
                     "status": "success"
                 })
             except Exception as e:
-                logger.error(f"Unexpected error syncing {image['name']}:{version}: {e}")
+                logger.error(f"Unexpected error syncing {name}:{version}: {e}")
                 summary["failed"] += 1
                 summary["details"].append({
-                    "image": image['name'],
+                    "image": name,
                     "tag": version,
                     "status": "failed"
                 })
@@ -226,3 +224,6 @@ def main():
 
     save_digest_records(digest_records)
     send_wecom_notification(summary)
+
+if __name__ == "__main__":
+    main()

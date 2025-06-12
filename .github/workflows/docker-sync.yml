@@ -13,54 +13,49 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
+    env:
+      ALIYUN_REGISTRY_NAMESPACE: ${{ secrets.ALIYUN_REGISTRY_NAMESPACE }}
+      WECOM_WEBHOOK_KEY: ${{ secrets.WECOM_WEBHOOK_KEY }}
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Git user
-        run: |
-          git config --global user.email "github-actions@users.noreply.github.com"
-          git config --global user.name "github-actions"
+      - name: Download previous digest_records.json
+        uses: actions/download-artifact@v4
+        with:
+          name: digest-records
+          path: .
+        continue-on-error: true
 
-      - name: Set up Python
+      - name: Setup Python 3.9
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
-
-      - name: Login to Aliyun Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: registry.cn-hangzhou.aliyuncs.com
-          username: ${{ secrets.ALIYUN_USERNAME }}
-          password: ${{ secrets.ALIYUN_PASSWORD }}
+          python-version: '3.9'
 
       - name: Install dependencies
-        run: |
-          python3 -m pip install --upgrade pip
-          pip install requests
+        run: pip install requests
 
-      - name: Sync Docker Images
-        env:
-          ALIYUN_REGISTRY_NAMESPACE: ${{ secrets.ALIYUN_REGISTRY_NAMESPACE }}
-          WECOM_WEBHOOK_KEY: ${{ secrets.WECOM_WEBHOOK_KEY }}
-        run: |
-          python3 sync_images.py
+      - name: Login to Aliyun Container Registry
+        run: echo "${{ secrets.ALIYUN_REGISTRY_PASSWORD }}" | docker login --username ${{ secrets.ALIYUN_REGISTRY_USERNAME }} --password-stdin registry.cn-hangzhou.aliyuncs.com
 
-      - name: Upload digest_records.json
-        uses: actions/upload-artifact@v4
+      - name: Run sync script
+        run: python sync_images.py
+
+      - name: Upload updated digest_records.json
+        uses: actions/upload-artifact@v3
         with:
           name: digest-records
           path: digest_records.json
           retention-days: 7
 
-      - name: Commit and push status.json (optional)
+      - name: Commit and push changes
         if: always()
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore(sync): update results"
+          commit_message: "chore(sync): update digest_records and status"
           branch: master
           commit_user_name: github-actions
           commit_user_email: actions@github.com
+          files: digest_records.json,status.json
         env:
-          GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
