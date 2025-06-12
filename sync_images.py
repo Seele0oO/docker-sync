@@ -37,8 +37,7 @@ def get_digest(image):
     output = run_command(inspect_cmd)
     if output:
         try:
-            digest = output.split()[0].split('@')[1]
-            return digest
+            return output.split()[0].split('@')[1]
         except Exception:
             return None
     return None
@@ -49,15 +48,30 @@ def load_digest_records():
     try:
         with open(DIGEST_RECORD_FILE, 'r') as f:
             content = f.read().strip()
-            if not content:
-                return {}
-            return json.loads(content)
+            return json.loads(content) if content else {}
     except Exception:
         return {}
 
 def save_digest_records(records):
     with open(DIGEST_RECORD_FILE, 'w') as f:
         json.dump(records, f, indent=4)
+
+def get_local_repo(source_name):
+    """
+    从完整访问地址中提取本地镜像名:
+    - 如果带 registry，去掉 registry 部分
+    - 去掉 official namespace 'library'
+    """
+    parts = source_name.split('/')
+    # 去掉 registry 部分
+    if '.' in parts[0] or ':' in parts[0]:
+        repo_parts = parts[1:]
+    else:
+        repo_parts = parts
+    # 去掉 library 前缀
+    if len(repo_parts) > 1 and repo_parts[0] == 'library':
+        repo_parts = repo_parts[1:]
+    return '/'.join(repo_parts)
 
 def get_target_image_name(source_name, version):
     """
@@ -68,13 +82,8 @@ def get_target_image_name(source_name, version):
     if not namespace:
         logger.error("Environment variable ALIYUN_REGISTRY_NAMESPACE not set.")
         sys.exit(1)
-    # 去除源地址中的 registry 域名，只保留仓库路径部分
     parts = source_name.split('/', 1)
-    if len(parts) == 2:
-        repo_path = parts[1]
-    else:
-        repo_path = parts[0]
-    # 针对阿里云命名规则，将 '/' 替换为 '-'
+    repo_path = parts[1] if len(parts) == 2 else parts[0]
     safe_repo = repo_path.replace('/', '-')
     return f"registry.cn-hangzhou.aliyuncs.com/{namespace}/{safe_repo}:{version}"
 
@@ -83,131 +92,111 @@ def local_image_exists(image_name):
     return run_command(f"docker image inspect {image_name}") is not None
 
 def sync_image(image, version, digest_records):
-    name = image['name']  # 已去除版本号的完整访问地址，如 docker.io/library/nginx
-    source_image = f"{name}:{version}"
-    target_image = get_target_image_name(name, version)
+    source = image['name']                 # e.g. docker.io/library/nginx or my.registry.com/org/img
+    source_image = f"{source}:{version}"   # fully qualified for pull/check
+    local_repo = get_local_repo(source)    # e.g. nginx or org/img
+    local_image = f"{local_repo}:{version}"
+    target_image = get_target_image_name(source, version)
 
     logger.info(f"==== Syncing {source_image} ====")
 
-    # Step 1: 镜像存在性校验
+    # 1. 检查远端是否存在
     if not check_image_exists(source_image):
-        logger.warning(f"{source_image} does not exist on remote. Skipping.")
+        logger.warning(f"{source_image} does not exist remotely. Skipping.")
         return
 
-    # Step 2: 拉取镜像
+    # 2. 拉取镜像
     if not run_command(f"docker pull {source_image}"):
         logger.error(f"Failed to pull {source_image}. Skipping.")
         return
 
-    # Step 3: 本地镜像确认
-    if not local_image_exists(source_image):
-        logger.error(f"{source_image} not found locally after pull. Skipping.")
+    # 3. 确认本地镜像（使用 local_image 名称）
+    if not local_image_exists(local_image):
+        logger.error(f"{local_image} not found locally after pull. Skipping.")
         return
 
-    # Step 4: 获取当前镜像 digest
-    current_digest = get_digest(source_image)
+    # 4. 获取 digest
+    current_digest = get_digest(local_image)
     if not current_digest:
-        logger.error(f"Cannot get digest for {source_image}. Skipping.")
+        logger.error(f"Cannot get digest for {local_image}. Skipping.")
         return
 
-    # Step 5: 检查 digest 是否变化
+    # 5. 判断是否变化
     key = source_image
-    prev_record = digest_records.get(key)
-    if prev_record and prev_record["digest"] == current_digest:
+    prev = digest_records.get(key)
+    if prev and prev.get("digest") == current_digest:
         logger.info(f"{key} not changed since last sync. Skipping.")
         return
 
-    # Step 6: 打标签
-    if not run_command(f"docker tag {source_image} {target_image}"):
-        logger.error(f"Failed to tag {source_image} as {target_image}")
+    # 6. 打标签
+    if not run_command(f"docker tag {local_image} {target_image}"):
+        logger.error(f"Failed to tag {local_image} as {target_image}")
         return
 
-    # Step 7: 推送镜像
+    # 7. 推送
     if not run_command(f"docker push {target_image}"):
         logger.error(f"Failed to push {target_image}")
         return
 
-    # Step 8: 成功记录
-    logger.info(f"Successfully synced {source_image} to {target_image}")
+    # 8. 记录
+    logger.info(f"Successfully synced {local_image} → {target_image}")
     digest_records[key] = {
         "digest": current_digest,
-        "last_sync_time": datetime.utcnow().isoformat()
+        "last_sync_time": datetime.utcnow().isoformat() + "Z"
     }
 
 def send_wecom_notification(summary: dict):
     key = os.environ.get("WECOM_WEBHOOK_KEY")
     if not key:
-        logger.warning("No WECOM_WEBHOOK_KEY found in env, skipping notification.")
+        logger.warning("No WECOM_WEBHOOK_KEY, skipping notification.")
         return
-
-    webhook_url = f"https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={key}"
-    success = summary.get("success", 0)
-    failed = summary.get("failed", 0)
-    total = success + failed
-
+    webhook = f"https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={key}"
+    total = summary.get("success",0) + summary.get("failed",0)
     lines = [
-        f"【Docker 镜像同步报告】",
-        f"🕒 时间: {datetime.utcnow().isoformat()} UTC",
-        f"📦 总任务数: {total}",
-        f"✅ 成功: {success}   ❌ 失败: {failed}",
+        "【Docker 镜像同步报告】",
+        f"🕒 {datetime.utcnow().isoformat()}Z UTC",
+        f"📦 Total: {total}  ✅ {summary.get('success',0)}  ❌ {summary.get('failed',0)}",
         "",
-        "📄 明细："
+        "明细："
     ]
-    for item in summary.get("details", []):
-        status_icon = "✅" if item["status"] == "success" else "❌"
-        lines.append(f"{status_icon} {item['image']}:{item['tag']}")
-
-    payload = {
-        "msgtype": "text",
-        "text": {
-            "content": "\n".join(lines)
-        }
-    }
+    for d in summary.get("details",[]):
+        icon = "✅" if d["status"]=="success" else "❌"
+        lines.append(f"{icon} {d['image']}:{d['tag']}")
+    payload = {"msgtype":"text","text":{"content":"\n".join(lines)}}
     try:
-        res = requests.post(webhook_url, json=payload, timeout=10)
-        if res.status_code == 200:
+        r = requests.post(webhook, json=payload, timeout=10)
+        if r.status_code==200:
             logger.info("WeCom notification sent.")
         else:
-            logger.warning(f"WeCom webhook failed: {res.status_code} - {res.text}")
+            logger.warning(f"WeCom failed: {r.status_code} {r.text}")
     except Exception as e:
-        logger.error(f"Failed to send WeCom notification: {e}")
+        logger.error(f"WeCom exception: {e}")
 
 def main():
     try:
-        with open('images.json', 'r') as f:
+        with open('images.json','r') as f:
             images = json.load(f)
     except Exception as e:
-        logger.error(f"Failed to load images.json: {e}")
+        logger.error(f"Load images.json error: {e}")
         sys.exit(1)
 
-    digest_records = load_digest_records()
-    summary = {"success": 0, "failed": 0, "details": []}
+    records = load_digest_records()
+    summary = {"success":0,"failed":0,"details":[]}
 
-    for image in images:
-        name = image.get('name')
-        versions = image.get('versions', [])
-        one_time = image.get('sync-one-time', [])
-        all_versions = set(versions + one_time)
-        for version in all_versions:
+    for img in images:
+        name = img.get('name')
+        versions = img.get('versions',[])
+        one_time = img.get('sync-one-time',[])
+        for v in set(versions + one_time):
             try:
-                sync_image(image, version, digest_records)
+                sync_image(img, v, records)
                 summary["success"] += 1
-                summary["details"].append({
-                    "image": name,
-                    "tag": version,
-                    "status": "success"
-                })
+                summary["details"].append({"image": name,"tag": v,"status":"success"})
             except Exception as e:
-                logger.error(f"Unexpected error syncing {name}:{version}: {e}")
+                logger.error(f"Error syncing {name}:{v}: {e}")
                 summary["failed"] += 1
-                summary["details"].append({
-                    "image": name,
-                    "tag": version,
-                    "status": "failed"
-                })
-                continue
-
-    save_digest_records(digest_records)
+                summary["details"].append({"image": name,"tag": v,"status":"failed"})
+    save_digest_records(records)
     send_wecom_notification(summary)
 
 if __name__ == "__main__":
