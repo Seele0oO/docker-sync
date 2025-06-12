@@ -80,6 +80,9 @@ def get_target_image_name(image, version):
             source_repo, source_org, source_image = parts[:3]
         target_name = f"{source_repo}-{source_org}-{source_image}:{version}"
     return f"registry.cn-hangzhou.aliyuncs.com/{namespace}/{target_name}"
+def local_image_exists(image_name):
+    """检查本地是否存在该镜像"""
+    return run_command(f"docker image inspect {image_name}", fatal=False) is not None
 
 def sync_image(image, version, digest_records):
     registry = image.get('registry', 'docker.io')
@@ -89,41 +92,51 @@ def sync_image(image, version, digest_records):
 
     logger.info(f"==== Syncing {source_image} ====")
 
+    # Step 1: 镜像存在性校验（防止拉空）
     if not check_image_exists(source_image):
-        logger.warning(f"{source_image} does not exist. Skipping.")
+        logger.warning(f"{source_image} does not exist on remote. Skipping.")
         return
 
-    # 拉取镜像
+    # Step 2: 拉取镜像
     if not run_command(f"docker pull {source_image}"):
         logger.error(f"Failed to pull {source_image}. Skipping.")
         return
 
+    # Step 3: 拉取后确认本地是否有镜像（防止 tag 失败）
+    if not local_image_exists(source_image):
+        logger.error(f"{source_image} not found locally after pull. Skipping.")
+        return
+
+    # Step 4: 获取当前镜像 digest
     current_digest = get_digest(source_image)
     if not current_digest:
         logger.error(f"Cannot get digest for {source_image}. Skipping.")
         return
 
+    # Step 5: 检查 digest 是否变化
     key = f"{registry}/{name}:{version}"
     prev_record = digest_records.get(key)
-
     if prev_record and prev_record["digest"] == current_digest:
         logger.info(f"{key} not changed since last sync. Skipping.")
         return
 
-    # 打标签并推送
+    # Step 6: 打标签
     if not run_command(f"docker tag {source_image} {target_image}"):
         logger.error(f"Failed to tag {source_image} as {target_image}")
         return
 
+    # Step 7: 推送镜像
     if not run_command(f"docker push {target_image}"):
         logger.error(f"Failed to push {target_image}")
         return
 
+    # Step 8: 成功记录
     logger.info(f"Successfully synced {source_image} to {target_image}")
     digest_records[key] = {
         "digest": current_digest,
         "last_sync_time": str(datetime.utcnow())
     }
+
 
 def main():
     try:
