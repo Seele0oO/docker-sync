@@ -60,24 +60,30 @@ def save_digest_records(records):
         json.dump(records, f, indent=4)
 
 def get_target_image_name(source_name, version):
-    """根据完整访问地址 source_name（不含版本）生成目标镜像地址"""
+    """
+    根据完整访问地址 source_name（不含版本）生成目标镜像地址，
+    并将路径中的 '/' 替换为 '-'，避免多级目录
+    """
     namespace = os.environ.get('ALIYUN_REGISTRY_NAMESPACE')
     if not namespace:
         logger.error("Environment variable ALIYUN_REGISTRY_NAMESPACE not set.")
         sys.exit(1)
     # 去除源地址中的 registry 域名，只保留仓库路径部分
-    if '/' in source_name:
-        repo_path = source_name.split('/', 1)[1]
+    parts = source_name.split('/', 1)
+    if len(parts) == 2:
+        repo_path = parts[1]
     else:
-        repo_path = source_name
-    return f"registry.cn-hangzhou.aliyuncs.com/{namespace}/{repo_path}:{version}"
+        repo_path = parts[0]
+    # 针对阿里云命名规则，将 '/' 替换为 '-'
+    safe_repo = repo_path.replace('/', '-')
+    return f"registry.cn-hangzhou.aliyuncs.com/{namespace}/{safe_repo}:{version}"
 
 def local_image_exists(image_name):
     """检查本地是否存在该镜像"""
     return run_command(f"docker image inspect {image_name}") is not None
 
 def sync_image(image, version, digest_records):
-    name = image['name']  # 现在 name 已经是去掉版本号的完整访问地址
+    name = image['name']  # 已去除版本号的完整访问地址，如 docker.io/library/nginx
     source_image = f"{name}:{version}"
     target_image = get_target_image_name(name, version)
 
