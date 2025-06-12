@@ -38,7 +38,9 @@ jobs:
       - name: Sync Docker Images
         env:
           ALIYUN_REGISTRY_NAMESPACE: ${{ secrets.ALIYUN_REGISTRY_NAMESPACE }}
+          WECOM_WEBHOOK_KEY: ${{ secrets.WECOM_WEBHOOK_KEY }}
         run: |
+          python3 -m pip install requests
           python3 sync_images.py
 
       - name: Upload digest_records.json

@@ -4,6 +4,7 @@ import json
 import subprocess
 import logging
 from datetime import datetime
+import requests
 
 # 设置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -138,6 +139,48 @@ def sync_image(image, version, digest_records):
     }
 
 
+
+def send_wecom_notification(summary: dict):
+    key = os.environ.get("WECOM_WEBHOOK_KEY")
+    if not key:
+        logger.warning("No WECOM_WEBHOOK_KEY found in env, skipping notification.")
+        return
+
+    webhook_url = f"https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={key}"
+
+    success = summary.get("success", 0)
+    failed = summary.get("failed", 0)
+    total = success + failed
+
+    lines = [
+        f"【Docker 镜像同步报告】",
+        f"🕒 时间: {datetime.utcnow().isoformat()} UTC",
+        f"📦 总任务数: {total}",
+        f"✅ 成功: {success}   ❌ 失败: {failed}",
+        "",
+        "📄 明细："
+    ]
+    for item in summary.get("details", []):
+        status_icon = "✅" if item["status"] == "success" else "❌"
+        lines.append(f"{status_icon} {item['image']}:{item['tag']}")
+
+    payload = {
+        "msgtype": "text",
+        "text": {
+            "content": "\n".join(lines)
+        }
+    }
+
+    try:
+        res = requests.post(webhook_url, json=payload, timeout=10)
+        if res.status_code == 200:
+            logger.info("WeCom notification sent.")
+        else:
+            logger.warning(f"WeCom webhook failed: {res.status_code} - {res.text}")
+    except Exception as e:
+        logger.error(f"Failed to send WeCom notification: {e}")
+
+
 def main():
     try:
         with open('images.json', 'r') as f:
@@ -163,5 +206,32 @@ def main():
 
     save_digest_records(digest_records)
 
-if __name__ == '__main__':
-    main()
+def main():
+    ...
+    digest_records = load_digest_records()
+
+    summary = {"success": 0, "failed": 0, "details": []}
+
+    for image in images:
+        ...
+        for version in all_versions:
+            try:
+                sync_image(image, version, digest_records)
+                summary["success"] += 1
+                summary["details"].append({
+                    "image": image['name'],
+                    "tag": version,
+                    "status": "success"
+                })
+            except Exception as e:
+                logger.error(f"Unexpected error syncing {image['name']}:{version}: {e}")
+                summary["failed"] += 1
+                summary["details"].append({
+                    "image": image['name'],
+                    "tag": version,
+                    "status": "failed"
+                })
+                continue
+
+    save_digest_records(digest_records)
+    send_wecom_notification(summary)
