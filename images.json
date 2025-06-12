@@ -1,6 +1,6 @@
 [
   {
-    "name": "nginx",
+    "name": "docker.io/library/nginx",
     "versions": ["latest"],
     "sync-one-time": ["1.21.7"]
   }

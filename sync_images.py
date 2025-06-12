@@ -59,48 +59,31 @@ def save_digest_records(records):
     with open(DIGEST_RECORD_FILE, 'w') as f:
         json.dump(records, f, indent=4)
 
-def get_target_image_name(image, version):
-    name = image.get('name')
-    registry = image.get('registry', 'docker.io')
+def get_target_image_name(source_name, version):
+    """根据完整访问地址 source_name（不含版本）生成目标镜像地址"""
     namespace = os.environ.get('ALIYUN_REGISTRY_NAMESPACE')
     if not namespace:
         logger.error("Environment variable ALIYUN_REGISTRY_NAMESPACE not set.")
         sys.exit(1)
-
-    if registry == 'docker.io':
-        if '/' in name:
-            source_org, source_image = name.split('/', 1)
-        else:
-            source_org = 'library'
-            source_image = name
-        target_name = f"{source_org}-{source_image}:{version}"
+    # 去除源地址中的 registry 域名，只保留仓库路径部分
+    if '/' in source_name:
+        repo_path = source_name.split('/', 1)[1]
     else:
-        parts = name.split('/')
-        if len(parts) == 1:
-            source_repo = registry
-            source_org = 'library'
-            source_image = name
-        elif len(parts) == 2:
-            source_repo = registry
-            source_org, source_image = parts
-        else:
-            source_repo, source_org, source_image = parts[:3]
-        target_name = f"{source_repo}-{source_org}-{source_image}:{version}"
-    return f"registry.cn-hangzhou.aliyuncs.com/{namespace}/{target_name}"
+        repo_path = source_name
+    return f"registry.cn-hangzhou.aliyuncs.com/{namespace}/{repo_path}:{version}"
 
 def local_image_exists(image_name):
     """检查本地是否存在该镜像"""
     return run_command(f"docker image inspect {image_name}") is not None
 
 def sync_image(image, version, digest_records):
-    registry = image.get('registry', 'docker.io')
-    name = image['name']
-    source_image = f"{registry}/{name}:{version}"
-    target_image = get_target_image_name(image, version)
+    name = image['name']  # 现在 name 已经是去掉版本号的完整访问地址
+    source_image = f"{name}:{version}"
+    target_image = get_target_image_name(name, version)
 
     logger.info(f"==== Syncing {source_image} ====")
 
-    # Step 1: 镜像存在性校验（防止拉空）
+    # Step 1: 镜像存在性校验
     if not check_image_exists(source_image):
         logger.warning(f"{source_image} does not exist on remote. Skipping.")
         return
@@ -110,7 +93,7 @@ def sync_image(image, version, digest_records):
         logger.error(f"Failed to pull {source_image}. Skipping.")
         return
 
-    # Step 3: 拉取后确认本地是否有镜像（防止 tag 失败）
+    # Step 3: 本地镜像确认
     if not local_image_exists(source_image):
         logger.error(f"{source_image} not found locally after pull. Skipping.")
         return
@@ -122,7 +105,7 @@ def sync_image(image, version, digest_records):
         return
 
     # Step 5: 检查 digest 是否变化
-    key = f"{registry}/{name}:{version}"
+    key = source_image
     prev_record = digest_records.get(key)
     if prev_record and prev_record["digest"] == current_digest:
         logger.info(f"{key} not changed since last sync. Skipping.")
@@ -142,7 +125,7 @@ def sync_image(image, version, digest_records):
     logger.info(f"Successfully synced {source_image} to {target_image}")
     digest_records[key] = {
         "digest": current_digest,
-        "last_sync_time": str(datetime.utcnow())
+        "last_sync_time": datetime.utcnow().isoformat()
     }
 
 def send_wecom_notification(summary: dict):
@@ -152,7 +135,6 @@ def send_wecom_notification(summary: dict):
         return
 
     webhook_url = f"https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={key}"
-
     success = summary.get("success", 0)
     failed = summary.get("failed", 0)
     total = success + failed
@@ -175,7 +157,6 @@ def send_wecom_notification(summary: dict):
             "content": "\n".join(lines)
         }
     }
-
     try:
         res = requests.post(webhook_url, json=payload, timeout=10)
         if res.status_code == 200:
@@ -194,7 +175,6 @@ def main():
         sys.exit(1)
 
     digest_records = load_digest_records()
-
     summary = {"success": 0, "failed": 0, "details": []}
 
     for image in images:
@@ -202,7 +182,6 @@ def main():
         versions = image.get('versions', [])
         one_time = image.get('sync-one-time', [])
         all_versions = set(versions + one_time)
-
         for version in all_versions:
             try:
                 sync_image(image, version, digest_records)
