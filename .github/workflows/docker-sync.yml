@@ -47,6 +47,7 @@ jobs:
           registry: registry.cn-hangzhou.aliyuncs.com
           username: ${{ secrets.ALIYUN_USERNAME }}
           password: ${{ secrets.ALIYUN_PASSWORD }}
+
       - name: Run sync script
         run: python sync_images.py
 
@@ -62,7 +63,7 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore(sync): update digest_records and status"
-          branch: master
+          branch: ${{ github.ref_name }}
           commit_user_name: github-actions
           commit_user_email: actions@github.com
           files: digest_records.json,status.json
