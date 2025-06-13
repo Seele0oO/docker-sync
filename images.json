@@ -54,13 +54,6 @@
     ]
   },
   {
-    "source": "registry.cn-hangzhou.aliyuncs.com/docker-sync-0xcb2533/linuxserver-nextcloud",
-    "destination": "placeholder",
-    "versions": [
-      "latest"
-    ]
-  },
-  {
     "source": "docker.io/p3terx/aria2-pro",
     "destination": "placeholder",
     "versions": [
@@ -166,14 +159,14 @@
     ]
   },
   {
-    "source": "ghcr.utilapi.bid/immich-app/immich-server",
+    "source": "ghcr.io/immich-app/immich-server",
     "destination": "placeholder",
     "versions": [
       "release"
     ]
   },
   {
-    "source": "ghcr.utilapi.bid/immich-app/immich-machine-learning",
+    "source": "ghcr.io/immich-app/immich-machine-learning",
     "destination": "placeholder",
     "versions": [
       "release"
@@ -215,7 +208,7 @@
     ]
   },
   {
-    "source": "ghcr.utilapi.bid/metatube-community/metatube-server",
+    "source": "ghcr.io/metatube-community/metatube-server",
     "destination": "placeholder",
     "versions": [
       "latest"
@@ -236,7 +229,7 @@
     ]
   },
   {
-    "source": "m.daocloud.io/gcr.io/cadvisor/cadvisor",
+    "source": "gcr.io/cadvisor/cadvisor",
     "destination": "placeholder",
     "versions": [
       "v0.49.1"
