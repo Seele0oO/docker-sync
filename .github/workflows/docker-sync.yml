@@ -31,8 +31,7 @@ jobs:
 
       - name: Prepare Docker Sync Scripts
         run: |
-          python3 gen_images_run.py
-          python3 get_sync_image_images.py
+          python3 gen_images_compat.py
 
       - name: check file exists
         run: |

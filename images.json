@@ -4,7 +4,8 @@
     "destination": "placeholder",
     "versions": [
       "latest",
-      "1.27.4"
+      "1.27.4",
+      "1.27.3"
     ]
   }
 ]
