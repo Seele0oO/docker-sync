@@ -1,7 +1,10 @@
 [
   {
-    "name": "docker.io/library/nginx",
-    "versions": ["latest"],
-    "sync-one-time": ["1.27.5"]
+    "source": "docker.io/library/nginx",
+    "destination": "placeholder",
+    "versions": [
+      "latest",
+      "1.27.4"
+    ]
   }
 ]

@@ -2,70 +2,48 @@ name: Docker Sync
 
 on:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *" # Every day at midnight UTC (convert to Shanghai time if needed)
   workflow_dispatch:
   push:
     paths:
-      - 'images.json'
+      - "images.json"
 
 jobs:
   sync_and_commit:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     env:
       ALIYUN_REGISTRY_NAMESPACE: ${{ secrets.ALIYUN_REGISTRY_NAMESPACE }}
       WECOM_WEBHOOK_KEY: ${{ secrets.WECOM_WEBHOOK_KEY }}
+      AUTH_JSON_BASE64: ${{ secrets.AUTH_JSON_BASE64 }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Download previous digest_records.json
-        uses: actions/download-artifact@v4
         with:
-          name: digest-records
-          path: .
-        continue-on-error: true
-
-      - name: Ensure digest_records.json exists
-        run: |
-          if [ ! -f digest_records.json ]; then
-            echo '{}' > digest_records.json
-          fi
+          fetch-depth: 1
 
       - name: Setup Python 3.9
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: "3.9"
 
-      - name: Install dependencies
-        run: pip install requests
+      - name: Decode AUTH_JSON_BASE64
+        run: echo "${{ secrets.AUTH_JSON_BASE64 }}" | base64 --decode > auth.json
 
-      - name: Login to Aliyun Container Registry
-        uses: docker/login-action@v3
+      - name: Prepare Docker Sync Scripts
+        run: |
+          python3 gen_images_run.py
+          python3 get_sync_image_images.py
+
+      - name: check file exists
+        run: |
+          if [ ! -f images_compat.json ]; then
+            echo "images_compat.json not found, exiting."
+            exit 1
+          fi
+
+      - uses: hhyasdf/image-sync-action@v1.1
         with:
-          registry: registry.cn-hangzhou.aliyuncs.com
-          username: ${{ secrets.ALIYUN_USERNAME }}
-          password: ${{ secrets.ALIYUN_PASSWORD }}
-
-      - name: Run sync script
-        run: python sync_images.py
-
-      - name: Upload updated digest_records.json
-        uses: actions/upload-artifact@v4
-        with:
-          name: digest-records
-          path: digest_records.json
-          retention-days: 7
-
-      - name: Commit and push changes
-        if: always()
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "chore(sync): update digest_records and status"
-          branch: ${{ github.ref_name }}
-          commit_user_name: github-actions
-          commit_user_email: actions@github.com
-          files: digest_records.json,status.json
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          auth_file: ./auth.json
+          images_file: ./images_compat.json
+          version: latest
+          proc: 6
