@@ -45,4 +45,4 @@ jobs:
           auth_file: ./auth.json
           images_file: ./images_compat.json
           version: latest
-          proc: 6
+          proc: 10
