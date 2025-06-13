@@ -6,7 +6,7 @@ def get_target_image_name(source, version):
     根据完整访问地址 source（不含版本）生成目标镜像地址，
     并将路径中的 '/' 替换为 '-'，避免多级目录
     """
-    namespace = os.environ.get('ALIYUN_REGISTRY_NAMESPACE', 'testns')  # 默认 testns 方便本地调试
+    namespace = os.environ.get('ALIYUN_REGISTRY_NAMESPACE', 'LOCALTEST')  # 默认 LOCALTEST 方便本地调试
     parts = source.split('/', 1)
     repo_path = parts[1] if len(parts) == 2 else parts[0]
     safe_repo = repo_path.replace('/', '-')

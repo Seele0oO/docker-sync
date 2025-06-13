@@ -7,5 +7,246 @@
       "1.27.4",
       "1.27.3"
     ]
+  },
+  {
+    "source": "docker.io/library/mysql",
+    "destination": "placeholder",
+    "versions": [
+      "oracle",
+      "8.0.41",
+      "5.7.44"
+    ]
+  },
+  {
+    "source": "ghcr.io/seele0oo/luoxu-web/luoxu",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "docker.io/library/snowdreamtech/frps",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "docker.io/library/snowdreamtech/frpc",
+    "destination": "placeholder",
+    "versions": [
+      "latest",
+      "alpine"
+    ]
+  },
+  {
+    "source": "ghcr.io/biliup/caution",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "docker.io/linuxserver/nextcloud",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "registry.cn-hangzhou.aliyuncs.com/docker-sync-0xcb2533/linuxserver-nextcloud",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "docker.io/p3terx/aria2-pro",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "docker.io/p3terx/ariang",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "docker.io/casbin/casdoor",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "docker.io/library/redis",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "docker.io/library/mariadb",
+    "destination": "placeholder",
+    "versions": [
+      "11"
+    ]
+  },
+  {
+    "source": "docker.io/linuxserver/jellyfin",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "docker.io/linuxserver/qbittorrent",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "docker.io/netcccyun/dnsmgr",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "docker.io/syncthing/syncthing",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "docker.io/snowdreamtech/frpc",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "docker.io/library/mysql",
+    "destination": "placeholder",
+    "versions": [
+      "5.7"
+    ]
+  },
+  {
+    "source": "docker.io/bcanfield/mediamtx-connect",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "docker.io/bluenviron/mediamtx",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "docker.io/linuxserver/librespeed",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "docker.io/gotson/komga",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "ghcr.utilapi.bid/immich-app/immich-server",
+    "destination": "placeholder",
+    "versions": [
+      "release"
+    ]
+  },
+  {
+    "source": "ghcr.utilapi.bid/immich-app/immich-machine-learning",
+    "destination": "placeholder",
+    "versions": [
+      "release"
+    ]
+  },
+  {
+    "source": "docker.io/tensorchord/pgvecto-rs",
+    "destination": "placeholder",
+    "versions": [
+      "pg14-v0.2.0"
+    ]
+  },
+  {
+    "source": "docker.io/valkey/valkey",
+    "destination": "placeholder",
+    "versions": [
+      "8-bookworm"
+    ]
+  },
+  {
+    "source": "docker.io/jonnyan404/cloud-clipboard",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "docker.io/photoprism/photoprism",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "docker.io/seele0oo/flame",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "ghcr.utilapi.bid/metatube-community/metatube-server",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "docker.io/library/postgres",
+    "destination": "placeholder",
+    "versions": [
+      "15-alpine"
+    ]
+  },
+  {
+    "source": "docker.io/containrrr/watchtower",
+    "destination": "placeholder",
+    "versions": [
+      "latest"
+    ]
+  },
+  {
+    "source": "m.daocloud.io/gcr.io/cadvisor/cadvisor",
+    "destination": "placeholder",
+    "versions": [
+      "v0.49.1"
+    ]
+  },
+  {
+    "source": "docker.io/louislam/dockge",
+    "destination": "placeholder",
+    "versions": [
+      "1"
+    ]
   }
 ]
